@@ -19,6 +19,12 @@ defmodule Tunez.Music.Artist do
     update_timestamp :updated_at  
   end
 
+  relationships do
+    has_many :albums, Tunez.Music.Album do
+      sort year_released: :desc
+    end
+  end
+
   actions do
     create :create do
       accept [:name, :biography]
@@ -34,7 +40,7 @@ defmodule Tunez.Music.Artist do
 
     destroy :destroy do
     end
-    
+
   end
 
 end
