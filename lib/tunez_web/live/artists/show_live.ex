@@ -33,7 +33,10 @@ defmodule TunezWeb.Artists.ShowLive do
       <.header>
         <.h1>
           {@artist.name}
-        </.h1>
+        </.h1> 
+        <:subtitle :if={@artist.previous_names != []}>
+          formerly known as: {Enum.join(@artist.previous_names, ", ")}
+        </:subtitle>
         <:action>
           <.button_link
             kind="error"
