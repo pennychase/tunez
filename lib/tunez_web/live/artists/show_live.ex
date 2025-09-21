@@ -10,18 +10,9 @@ defmodule TunezWeb.Artists.ShowLive do
   def handle_params(%{"id" => artist_id}, _url, socket) do
     artist = Tunez.Music.get_artist_by_id!(artist_id, load: [:albums])
 
-    # albums = [
-    #   %{
-    #     id: "test-album-1",
-    #     name: "Test Album",
-    #     year_released: 2023,
-    #     cover_image_url: nil
-    #   }]
-
     socket =
       socket
       |> assign(:artist, artist)
-      # |> assign(:albums, albums)
       |> assign(:page_title, artist.name)
 
     {:noreply, socket}
