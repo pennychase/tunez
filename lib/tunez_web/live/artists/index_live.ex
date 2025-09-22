@@ -12,16 +12,17 @@ defmodule TunezWeb.Artists.IndexLive do
   end
 
   def handle_params(params, _url, socket) do
+    page_params = AshPhoenix.LiveView.page_from_params(params, 12)
+
     sort_by = Map.get(params, "sort_by") |> validate_sort_by()
     query_text = Map.get(params, "q", "")
-    artists = Tunez.Music.search_artists!(query_text, 
-                query: [sort_input: sort_by])
+    page = Tunez.Music.search_artists!(query_text, page: page_params, query: [sort_input: sort_by])
     
     socket =
       socket
       |> assign(:sort_by, sort_by)
       |> assign(:query_text, query_text)
-      |> assign(:artists, artists)
+      |> assign(:page, page)
 
     {:noreply, socket}
   end
@@ -43,16 +44,18 @@ defmodule TunezWeb.Artists.IndexLive do
         </:action>
       </.header>
 
-      <div :if={@artists == []} class="p-8 text-center">
+      <div :if={@page.results == []} class="p-8 text-center">
         <.icon name="hero-face-frown" class="w-32 h-32 bg-gray-300" />
         <br /> No artist data to display!
       </div>
 
       <ul class="gap-6 lg:gap-12 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-        <li :for={artist <- @artists}>
+        <li :for={artist <- @page.results}>
           <.artist_card artist={artist} />
         </li>
       </ul>
+
+      <.pagination_links page={@page} query_text={@query_text} sort_by={@sort_by} />
     </Layouts.app>
     """
   end
@@ -61,7 +64,7 @@ defmodule TunezWeb.Artists.IndexLive do
     ~H"""
     <div id={"artist-#{@artist.id}"} data-role="artist-card" class="relative mb-2">
       <.link navigate={~p"/artists/#{@artist.id}"}>
-        <.cover_image />
+        <.cover_image image={@artist.cover_image_url} />
       </.link>
     </div>
     <p class="flex justify-between">
@@ -73,6 +76,7 @@ defmodule TunezWeb.Artists.IndexLive do
         {@artist.name}
       </.link>
     </p>
+    <.artist_card_album_info artist={@artist} />
     """
   end
 
@@ -107,15 +111,34 @@ defmodule TunezWeb.Artists.IndexLive do
 
   def pagination_links(assigns) do
     ~H"""
-    <div class="flex justify-center pt-8 space-x-4">
-      <.button_link data-role="previous-page" kind="primary" inverse>
-        « Previous
+    <div :if={AshPhoenix.LiveView.prev_page?(@page) || AshPhoenix.LiveView.next_page?(@page)}
+         class="flex justify-center pt-8 space-x-4"
+    >  
+      <.button_link data-role="previous-page" kind="primary" inverse
+        patch={~p"/?#{query_string(@page, @query_text, @sort_by, "prev")}"}
+        disabled={!AshPhoenix.LiveView.prev_page?(@page)}
+      >
+        Previous
       </.button_link>
-      <.button_link data-role="next-page" kind="primary" inverse>
-        Next »
+      <.button_link data-role="next-page" kind="primary" inverse
+        patch={~p"/?#{query_string(@page, @query_text, @sort_by, "next")}"}
+        disabled={!AshPhoenix.LiveView.next_page?(@page)}
+      >
+        Next
       </.button_link>
     </div>
     """
+  end
+
+
+  def query_string(page, query_text, sort_by, which) do
+    case AshPhoenix.LiveView.page_link_params(page, which) do
+      :invalid -> []
+      list -> list
+    end
+    |> Keyword.put(:q, query_text)
+    |> Keyword.put(:sort_by, sort_by)
+    |> remove_empty()
   end
 
   attr :query, :string, default: ""
@@ -161,7 +184,9 @@ defmodule TunezWeb.Artists.IndexLive do
     [
       {"recently updated", "-updated_at"},
       {"recently added", "-inserted_at"},
-      {"name", "name"}
+      {"name", "name"},
+      {"number of albums", "-album_count"},
+      {"latest album release", "--latest_album_year_released"}
     ]
   end
 
@@ -181,7 +206,6 @@ defmodule TunezWeb.Artists.IndexLive do
 
   def handle_event("change-sort", %{"sort_by" => sort_by}, socket) do
     params = remove_empty(%{q: socket.assigns.query_text, sort_by: sort_by})
-    IO.inspect(params)
     {:noreply, push_patch(socket, to: ~p"/?#{params}")}
   end
 
