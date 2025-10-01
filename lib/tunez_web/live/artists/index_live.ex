@@ -16,8 +16,10 @@ defmodule TunezWeb.Artists.IndexLive do
 
     sort_by = Map.get(params, "sort_by") |> validate_sort_by()
     query_text = Map.get(params, "q", "")
-    page = Tunez.Music.search_artists!(query_text, page: page_params, query: [sort_input: sort_by])
-    
+
+    page =
+      Tunez.Music.search_artists!(query_text, page: page_params, query: [sort_input: sort_by])
+
     socket =
       socket
       |> assign(:sort_by, sort_by)
@@ -33,8 +35,7 @@ defmodule TunezWeb.Artists.IndexLive do
       <.header responsive={false}>
         <.h1>Artists</.h1>
         <:action>
-          <.search_box query={@query_text} method="get"
-                       data-role="artist-search" phx-submit="search" />
+          <.search_box query={@query_text} method="get" data-role="artist-search" phx-submit="search" />
         </:action>
         <:action><.sort_changer selected={@sort_by} /></:action>
         <:action>
@@ -111,16 +112,23 @@ defmodule TunezWeb.Artists.IndexLive do
 
   def pagination_links(assigns) do
     ~H"""
-    <div :if={AshPhoenix.LiveView.prev_page?(@page) || AshPhoenix.LiveView.next_page?(@page)}
-         class="flex justify-center pt-8 space-x-4"
-    >  
-      <.button_link data-role="previous-page" kind="primary" inverse
+    <div
+      :if={AshPhoenix.LiveView.prev_page?(@page) || AshPhoenix.LiveView.next_page?(@page)}
+      class="flex justify-center pt-8 space-x-4"
+    >
+      <.button_link
+        data-role="previous-page"
+        kind="primary"
+        inverse
         patch={~p"/?#{query_string(@page, @query_text, @sort_by, "prev")}"}
         disabled={!AshPhoenix.LiveView.prev_page?(@page)}
       >
         Previous
       </.button_link>
-      <.button_link data-role="next-page" kind="primary" inverse
+      <.button_link
+        data-role="next-page"
+        kind="primary"
+        inverse
         patch={~p"/?#{query_string(@page, @query_text, @sort_by, "next")}"}
         disabled={!AshPhoenix.LiveView.next_page?(@page)}
       >
@@ -129,7 +137,6 @@ defmodule TunezWeb.Artists.IndexLive do
     </div>
     """
   end
-
 
   def query_string(page, query_text, sort_by, which) do
     case AshPhoenix.LiveView.page_link_params(page, which) do

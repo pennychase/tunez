@@ -24,7 +24,7 @@ defmodule TunezWeb.Artists.ShowLive do
       <.header>
         <.h1>
           {@artist.name}
-        </.h1> 
+        </.h1>
         <:subtitle :if={@artist.previous_names != []}>
           formerly known as: {Enum.join(@artist.previous_names, ", ")}
         </:subtitle>
@@ -141,25 +141,25 @@ defmodule TunezWeb.Artists.ShowLive do
   end
 
   def handle_event("destroy-artist", _params, socket) do
-      case Tunez.Music.destroy_artist(socket.assigns.artist) do
-        :ok ->
-          socket =
-            socket
-            |> put_flash(:info, "Artist deleted successfully")
-            |> push_navigate(to: ~p"/")
+    case Tunez.Music.destroy_artist(socket.assigns.artist) do
+      :ok ->
+        socket =
+          socket
+          |> put_flash(:info, "Artist deleted successfully")
+          |> push_navigate(to: ~p"/")
 
-          {:noreply, socket}
+        {:noreply, socket}
 
-        {:error, error} ->
-          Logger.info("Could not delete artist '#{socket.assigns.artist.id}':
+      {:error, error} ->
+        Logger.info("Could not delete artist '#{socket.assigns.artist.id}':
             #{inspect(error)}")
 
-          socket =
-            socket
-            |> put_flash(:error, "Could not delete artists")
+        socket =
+          socket
+          |> put_flash(:error, "Could not delete artists")
 
-          {:noreply, socket}
-        end
+        {:noreply, socket}
+    end
   end
 
   def handle_event("destroy-album", %{"id" => album_id}, socket) do
@@ -172,6 +172,7 @@ defmodule TunezWeb.Artists.ShowLive do
               Enum.reject(albums, &(&1.id == album_id))
             end)
           end)
+
         {:noreply, socket}
 
       {:error, error} ->

@@ -111,7 +111,8 @@ defmodule TunezWeb.Albums.FormLive do
   def handle_event("validate", %{"form" => form_data}, socket) do
     socket =
       update(socket, :form, fn form ->
-        AshPhoenix.Form.validate(form, form_data) end)
+        AshPhoenix.Form.validate(form, form_data)
+      end)
 
     {:noreply, socket}
   end
@@ -123,6 +124,7 @@ defmodule TunezWeb.Albums.FormLive do
           socket
           |> put_flash(:info, "Album saved successfully")
           |> push_navigate(to: ~p"/artists/#{album.artist_id}")
+
         {:noreply, socket}
 
       {:error, form} ->
@@ -130,9 +132,9 @@ defmodule TunezWeb.Albums.FormLive do
           socket
           |> put_flash(:error, "Could not save album data")
           |> assign(:form, form)
+
         {:noreply, socket}
     end
-
   end
 
   def handle_event("add-track", _params, socket) do
