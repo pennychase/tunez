@@ -3,7 +3,8 @@ defmodule Tunez.Music.Artist do
     otp_app: :tunez,
     domain: Tunez.Music,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshGraphql.Resource, AshJsonApi.Resource]
+    extensions: [AshGraphql.Resource, AshJsonApi.Resource],
+    authorizers: [Ash.Policy.Authorizer]
 
   graphql do
     type :artist
@@ -43,6 +44,7 @@ defmodule Tunez.Music.Artist do
 
     read :read do
       primary? true
+      pagination required?: false, offset?: true, keyset?: true
     end
 
     read :search do
@@ -96,7 +98,15 @@ defmodule Tunez.Music.Artist do
       sort year_released: :desc
       public? true
     end
+    belongs_to :created_by, Tunez.Accounts.User
+    belongs_to :updated_by, Tunez.Accounts.User
   end
+
+  changes do
+    change relate_actor(:created_by, allow_nil?: true), on: [:create]
+    change relate_actor(:updated_by, allow_nil?: true)
+  end
+
 
   # Originally defined calcuated fields with calculations. Switched to aggregates
 
@@ -120,4 +130,21 @@ defmodule Tunez.Music.Artist do
 
     first :cover_image_url, :albums, :cover_image_url
   end
+
+  policies do
+    policy action(:create) do
+      authorize_if actor_attribute_equals(:role, :admin)
+    end 
+    policy action_type(:read) do
+      authorize_if always()
+    end
+    policy action(:update) do
+      authorize_if actor_attribute_equals(:role, :admin)
+      authorize_if actor_attribute_equals(:role, :editor)
+    end
+    policy action(:destroy) do
+      authorize_if actor_attribute_equals(:role, :admin)
+    end 
+  end
+
 end

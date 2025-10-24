@@ -8,7 +8,10 @@ defmodule TunezWeb.Artists.ShowLive do
   end
 
   def handle_params(%{"id" => artist_id}, _url, socket) do
-    artist = Tunez.Music.get_artist_by_id!(artist_id, load: [:albums])
+    artist = Tunez.Music.get_artist_by_id!(artist_id,
+      load: [albums: [:duration, :tracks]],
+      actor: socket.assigns.current_user
+    )
 
     socket =
       socket
@@ -28,7 +31,7 @@ defmodule TunezWeb.Artists.ShowLive do
         <:subtitle :if={@artist.previous_names != []}>
           formerly known as: {Enum.join(@artist.previous_names, ", ")}
         </:subtitle>
-        <:action>
+        <:action :if={Tunez.Music.can_destroy_artist?(@current_user, @artist)}>
           <.button_link
             kind="error"
             inverse
@@ -38,21 +41,27 @@ defmodule TunezWeb.Artists.ShowLive do
             Delete Artist
           </.button_link>
         </:action>
-        <:action>
+        <:action :if={Tunez.Music.can_update_artist?(@current_user, @artist)}>
           <.button_link navigate={~p"/artists/#{@artist.id}/edit"} kind="primary" inverse>
             Edit Artist
           </.button_link>
         </:action>
       </.header>
+
       <div class="mb-6">{formatted(@artist.biography)}</div>
 
-      <.button_link navigate={~p"/artists/#{@artist.id}/albums/new"} kind="primary">
+      <.button_link 
+        :if={Tunez.Music.can_create_album?(@current_user)}
+        navigate={~p"/artists/#{@artist.id}/albums/new"} 
+        kind="primary"
+      >
         New Album
       </.button_link>
 
+
       <ul class="mt-10 space-y-6 md:space-y-10">
         <li :for={album <- @artist.albums}>
-          <.album_details album={album} />
+          <.album_details album={album} current_user={@current_user} />
         </li>
       </ul>
     </Layouts.app>
@@ -69,8 +78,9 @@ defmodule TunezWeb.Artists.ShowLive do
         <.header class="pl-3 pr-2 !m-0">
           <.h2>
             {@album.name} ({@album.year_released})
+            <span :if={@album.duration} class="text-base">({@album.duration})</span>
           </.h2>
-          <:action>
+          <:action :if={Tunez.Music.can_destroy_album?(@current_user, @album)}>
             <.button_link
               size="sm"
               inverse
@@ -82,13 +92,13 @@ defmodule TunezWeb.Artists.ShowLive do
               Delete
             </.button_link>
           </:action>
-          <:action>
+          <:action :if={Tunez.Music.can_update_album?(@current_user, @album)}>
             <.button_link size="sm" kind="primary" inverse navigate={~p"/albums/#{@album.id}/edit"}>
               Edit
             </.button_link>
           </:action>
         </.header>
-        <.track_details tracks={[]} />
+        <.track_details tracks={@album.tracks} />
       </div>
     </div>
     """
@@ -99,10 +109,10 @@ defmodule TunezWeb.Artists.ShowLive do
     <table :if={@tracks != []} class="w-full mt-2 -z-10">
       <tr :for={track <- @tracks} class="border-t first:border-0 border-gray-100">
         <th class="whitespace-nowrap w-1 p-3">
-          {String.pad_leading("#{track.order}", 2, "0")}.
+          {String.pad_leading("#{track.number}", 2, "0")}.
         </th>
         <td class="p-3">{track.name}</td>
-        <td class="whitespace-nowrap w-1 text-right p-2">{track.duration_seconds}</td>
+        <td class="whitespace-nowrap w-1 text-right p-2">{track.duration}</td>
       </tr>
     </table>
     <div :if={@tracks == []} class="p-8 text-center italic text-gray-400">
@@ -141,7 +151,10 @@ defmodule TunezWeb.Artists.ShowLive do
   end
 
   def handle_event("destroy-artist", _params, socket) do
-    case Tunez.Music.destroy_artist(socket.assigns.artist) do
+    case Tunez.Music.destroy_artist(
+      socket.assigns.artist, 
+      actor: socket.assign.current_user
+    ) do
       :ok ->
         socket =
           socket
@@ -163,7 +176,10 @@ defmodule TunezWeb.Artists.ShowLive do
   end
 
   def handle_event("destroy-album", %{"id" => album_id}, socket) do
-    case Tunez.Music.destroy_album(album_id) do
+    case Tunez.Music.destroy_album(
+      album_id, 
+      actor: socket.assigns.current_user
+    ) do
       :ok ->
         socket =
           socket
