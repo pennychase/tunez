@@ -12,6 +12,8 @@ defmodule Tunez.Music.Album do
 
   json_api do
     type "album"
+    default_fields [:name, :year_released, :cover_image_url, :duration]
+    includes [:tracks]
   end
 
   postgres do
@@ -88,6 +90,7 @@ defmodule Tunez.Music.Album do
     
     has_many :tracks, Tunez.Music.Track do
       sort order: :asc
+      public? true
     end
   end
 
@@ -127,7 +130,9 @@ defmodule Tunez.Music.Album do
 
     calculate :description, :string, expr(name <> " :: " <> year_released)
   
-    calculate :duration, :string, Tunez.Music.Calculations.SecondsToMinutes
+    calculate :duration, :string, Tunez.Music.Calculations.SecondsToMinutes do
+      public? true
+    end
   end
 
   identities do
