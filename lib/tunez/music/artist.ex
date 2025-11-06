@@ -100,6 +100,13 @@ defmodule Tunez.Music.Artist do
     end
     belongs_to :created_by, Tunez.Accounts.User
     belongs_to :updated_by, Tunez.Accounts.User
+
+    has_many :follower_relationships, Tunez.Music.ArtistFollower
+
+    many_to_many :followers, Tunez.Accounts.User do
+      join_relationship :follower_relationships
+      destination_attribute_on_join_resource :follower_id
+    end
   end
 
   changes do
@@ -108,16 +115,11 @@ defmodule Tunez.Music.Artist do
   end
 
 
-  # Originally defined calcuated fields with calculations. Switched to aggregates
-
-  # calculations do
-  #   calculate :album_count, :integer, 
-  #     expr(count(albums))
-  #   calculate :latest_album_year_released, :integer, 
-  #     expr(first(albums, field: :year_released))
-  #   calculate :cover_image_url, :string,
-  #     expr(first(albums, field: :cover_image_url))
-  # end
+  calculations do
+    calculate :followed_by_me,
+              :boolean,
+              expr(exists(follower_relationships, follower_id == ^actor(:id)))
+  end
 
   aggregates do
     count :album_count, :albums do
