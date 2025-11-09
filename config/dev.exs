@@ -87,3 +87,6 @@ config :swoosh, :api_client, false
 
 # Enable authentication failures debugging
 config :ash_authentication, debug_authentication_failures?: true
+
+config :ash, :pub_sub, debug?: true
+

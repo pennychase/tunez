@@ -156,7 +156,7 @@ defmodule TunezWeb.Artists.ShowLive do
   def handle_event("destroy-artist", _params, socket) do
     case Tunez.Music.destroy_artist(
       socket.assigns.artist, 
-      actor: socket.assign.current_user
+      actor: socket.assigns.current_user
     ) do
       :ok ->
         socket =
@@ -179,10 +179,7 @@ defmodule TunezWeb.Artists.ShowLive do
   end
 
   def handle_event("destroy-album", %{"id" => album_id}, socket) do
-    case Tunez.Music.destroy_album(
-      album_id, 
-      actor: socket.assigns.current_user
-    ) do
+    case Tunez.Music.destroy_album(album_id, actor: socket.assigns.current_user) do
       :ok ->
         socket =
           socket
@@ -191,6 +188,7 @@ defmodule TunezWeb.Artists.ShowLive do
               Enum.reject(albums, &(&1.id == album_id))
             end)
           end)
+          |> put_flash(:info, "Album deleted successfully")
 
         {:noreply, socket}
 

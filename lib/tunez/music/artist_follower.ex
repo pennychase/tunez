@@ -28,7 +28,7 @@ defmodule Tunez.Music.ArtistFollower do
         allow_nil? false
       end
 
-      filter expr(art_id == ^arg(:artist_id))
+      filter expr(artist_id == ^arg(:artist_id))
       pagination keyset?: true, required?: false
     end
 
